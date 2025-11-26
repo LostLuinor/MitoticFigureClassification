@@ -1,0 +1,21 @@
+{
+  "total_samples": 22642,
+  "ami_br_samples": 1999,
+  "midog25_samples": 11939,
+  "train_samples": 12772,
+  "val_samples": 4972,
+  "test_samples": 4898,
+  "class_distribution": {
+    "normal": 11762,
+    "atypical": 10880
+  },
+  "class_percentages": {
+    "normal": 51.94770779966434,
+    "atypical": 48.052292200335664
+  },
+  "dataset_distribution": {
+    "MIDOG25": 18931,
+    "AMI-BR": 3711
+  },
+  "duplicates_removed": 135
+}
