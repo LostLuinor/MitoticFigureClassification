@@ -71,7 +71,6 @@ This results in approximately **6,000 additional AMF samples**, yielding a balan
 - **Resolution:** 224 × 224 pixels
 - **Color Space:** RGB
 - **Content:** Isolated patches centered on mitotic figures
-- **Source Tissue:** Breast cancer H&E-stained microscopy slides
 
 ---
 
