@@ -74,6 +74,27 @@ This results in approximately **6,000 additional AMF samples**, yielding a balan
 
 ---
 
+## Baseline Model Selection & Comparison
+
+To identify the best baseline architecture, several CNN models—including DenseNet, MobileNet, ConvNeXt, EfficientNet, ViT, NASNet, RegNet, and XceptionNet—were evaluated on the dataset. Performance metrics such as accuracy, loss, precision, recall, and F1-score were compared across models.
+
+Based on the results, **DenseNet-121** was selected as the backbone for further development due to its strong overall performance, achieving high accuracy and balanced precision, recall, and F1-score.
+
+**Model Performance Comparison:**
+
+| Model             | Accuracy (%) | Loss    | Precision | Recall   | F1-score |
+|-------------------|-------------|---------|-----------|----------|----------|
+| EfficientNet-B0   | 85.29       | 0.1035  | 0.8500    | 0.8500   | 0.8500   |
+| **DenseNet-121**  | **89.02**   | **0.0900** | **0.8904** | **0.8902** | **0.8903** |
+| ViT-B16           | 87.16       | 0.0960  | 0.8720    | 0.8715   | 0.8718   |
+| ConvNeXt-Tiny     | 89.31       | 0.0866  | 0.8890    | 0.8931   | 0.8906   |
+| MobileNetv2-100   | 87.19       | 0.0976  | 0.8543    | 0.8690   | 0.8575   |
+| NASNet-Large      | 82.42       | 0.1471  | 0.7308    | 0.8242   | 0.7679   |
+| RegNetY-16        | 87.16       | 0.0960  | 0.8720    | 0.8715   | 0.8718   |
+| XceptionNet       | 89.31       | 0.0866  | 0.8890    | 0.8931   | 0.8906   |
+
+---
+
 ## Model Training & Evaluation Summary
 
 The model was trained using images resized to **224 × 224** pixels to match the DenseNet-121 input format. Training was performed for **50 epochs** with a **batch size of 32** using the **Adam optimizer**. To address class imbalance, **Focal Loss** ($\alpha = 0.75$, $\gamma = 2.0$) was employed. The final classification layer used **Softmax activation**.
