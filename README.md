@@ -74,6 +74,30 @@ This results in approximately **6,000 additional AMF samples**, yielding a balan
 
 ---
 
+## Model Training & Evaluation Summary
+
+The model was trained using images resized to **224 × 224** pixels to match the DenseNet-121 input format. Training was performed for **50 epochs** with a **batch size of 32** using the **Adam optimizer**. To address class imbalance, **Focal Loss** ($\alpha = 0.75$, $\gamma = 2.0$) was employed. The final classification layer used **Softmax activation**.
+
+**Channel attention** was introduced via a Squeeze-and-Excitation (SE) module, and a **non-local attention block** (SE1D) was added at the experimentally determined optimal position. The backbone architecture was **DenseNet-121 pretrained on ImageNet**.
+
+**Key hyperparameters and configurations:**
+
+| Parameter               | Description                        | Value                                 |
+|------------------------|------------------------------------|---------------------------------------|
+| Input Image Size       | Resized image resolution           | 224 × 224                             |
+| Batch Size             | Samples per batch during training  | 32                                    |
+| Epochs                 | Total training iterations          | 50                                    |
+| Optimizer              | Optimization algorithm             | Adam                                  |
+| Loss Function          | Training loss function             | Focal Loss ($\alpha=0.75$, $\gamma=2.0$) |
+| Activation Function    | Final layer activation             | Softmax                               |
+| Backbone Architecture  | Pre-trained CNN backbone           | DenseNet-121 (ImageNet)               |
+| Attention Mechanism    | Channel attention module           | SE (Squeeze-and-Excitation)           |
+| Non-Local Attention    | Feature-wise self-attention        | SE1D                                  |
+
+The model was evaluated using four metrics: **accuracy, precision, recall, and F1 Score**. **Precision** was the primary metric, as it is crucial for identifying false positives when differentiating atypical mitotic figures from other similar cells. The other metrics provided additional insights into the overall classification performance.
+
+---
+
 ## Credits
 
 This project uses datasets and resources provided by the [MIDOG 2025 Challenge](https://midog2025.deepmicroscopy.org/), which builds on the success of previous MIDOG challenges to advance AI-assisted cancer diagnosis.
