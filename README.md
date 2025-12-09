@@ -124,3 +124,26 @@ The model was evaluated using four metrics: **accuracy, precision, recall, and F
 This project uses datasets and resources provided by the [MIDOG 2025 Challenge](https://midog2025.deepmicroscopy.org/), which builds on the success of previous MIDOG challenges to advance AI-assisted cancer diagnosis.
 
 Special thanks to the MIDOG organizers for their efforts in curating high-quality datasets and promoting research in histopathological image analysis.
+
+---
+
+## Selecting Convolutional Attention
+
+To improve feature extraction on top of the DenseNet-121 backbone, we experimented with several attention mechanisms commonly used in convolutional architectures: CCA, CBAM, ECA, GAM, PSA, and SE. We first evaluated single-attention variants and found that **SE (Squeeze-and-Excitation)** delivered the best performance among them. We then tried combining SE with other attentions (SE+PSA, SE+CCA), but **SE alone** still provided superior overall results.
+
+### Convolutional Attention Performance Comparison
+
+| Model     | Accuracy | Loss   | Precision | Recall  | F1-score |
+|-----------|----------|--------|-----------|---------|----------|
+| CBAM      | 0.8859   | 0.0874 | 0.8855    | 0.8859  | 0.8857   |
+| CCA       | 0.8888   | 0.0881 | 0.8833    | 0.8888  | 0.8854   |
+| ECA       | 0.8841   | 0.0986 | 0.8849    | 0.8841  | 0.8845   |
+| GAM       | 0.8741   | 0.0912 | 0.8810    | 0.8741  | 0.8771   |
+| PSA       | 0.8910   | 0.0885 | 0.8817    | 0.8877  | 0.8840   |
+| **SE**    | **0.8942** | **0.0874** | **0.8937** | **0.8942** | **0.8939** |
+| SE+CCA    | 0.8856   | 0.0941 | 0.8856    | 0.8856  | 0.8866   |
+| SE+PSA    | 0.8841   | 0.0982 | 0.8901    | 0.8841  | 0.8867   |
+| Self-Att  | 0.8795   | 0.0875 | 0.8782    | 0.8795  | 0.8788   |
+| Triplet   | 0.8802   | 0.0908 | 0.8849    | 0.8802  | 0.8823   |
+
+In summary, the SE attention module was selected for the final model configuration due to its consistent improvements across metrics and its simplicity compared to multi-attention combinations.
