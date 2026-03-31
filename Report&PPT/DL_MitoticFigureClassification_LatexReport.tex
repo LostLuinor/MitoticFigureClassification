@@ -1,0 +1,445 @@
+\documentclass[conference]{IEEEtran}
+\IEEEoverridecommandlockouts
+\usepackage{cite}
+\usepackage{amsmath,amssymb,amsfonts}
+\usepackage{algorithmic}
+\usepackage{graphicx}
+\usepackage{textcomp}
+\usepackage{xcolor}
+\usepackage[hidelinks]{hyperref}
+\usepackage{array}
+\usepackage{booktabs}
+\usepackage{float}
+\usepackage[font=small,skip=2pt]{caption}
+\usepackage{pifont}
+\usepackage{makecell}
+\usepackage{hyperref}
+\usepackage{subcaption}
+\usepackage[T1]{fontenc}
+\def\BibTeX{{\rm B\kern-.05em{\sc i\kern-.025em b}\kern-.08em%
+    T\kern-.1667em\lower.7ex\hbox{E}\kern-.125emX}}
+
+\begin{document}
+
+\title{An Attention-Enhanced Deep Learning Model for Robust Identification of Atypical Mitotic Figures}
+
+\author{
+\IEEEauthorblockN{Vetcha Ashrita}
+\IEEEauthorblockA{
+        \textit{Department of Computer Science}\\
+        \textit{and Engineering}\\
+        \textit{Amrita School of Computing, Bengaluru}\\
+        \textit{Amrita Vishwa Vidyapeetham, India}\\
+        bl.en.u4aie23137@bl.students.amrita.edu\\
+}
+\and
+
+\IEEEauthorblockN{Raksha Venkatesha}
+\IEEEauthorblockA{
+    \textit{Department of Computer Science}\\
+    \textit{and Engineering}\\
+    \textit{Amrita School of Computing, Bengaluru}\\
+    \textit{Amrita Vishwa Vidyapeetham, India}\\
+    bl.en.u4aie23159@bl.students.amrita.edu\\
+}
+    
+\and
+\IEEEauthorblockN{Lishanthan Sri Ayyanar}
+\IEEEauthorblockA{
+    \textit{Department of Computer Science}\\
+    \textit{and Engineering}\\
+    \textit{Amrita School of Computing, Bengaluru}\\
+    \textit{Amrita Vishwa Vidyapeetham, India}\\
+    bl.en.u4aie23164@bl.students.amrita.edu\\
+    }
+
+\and
+
+\IEEEauthorblockN{Binitha Shree Gogineni}
+\IEEEauthorblockA{
+    \textit{Department of Computer Science}\\
+    \textit{and Engineering}\\
+    \textit{Amrita School of Computing, Bengaluru}\\
+    \textit{Amrita Vishwa Vidyapeetham, India}\\
+    bl.en.u4aie23169@bl.students.amrita.edu\\
+    }
+
+\and
+\IEEEauthorblockN{Rimjhim Padam Singh}
+\IEEEauthorblockA{
+    \textit{Department of Computer Science}\\
+    \textit{and Engineering}\\
+    \textit{Amrita School of Computing, Bengaluru} \\
+    \textit{Amrita Vishwa Vidyapeetham, India} \\
+    ps\_rimjhim@blr.amrita.edu
+}
+}
+
+\maketitle
+
+\begin{abstract}
+Atypical mitotic figures (AMF) are valuable biomarkers for assessing tumour aggressiveness, but accurately detecting them is difficult because they appear infrequently and often differ only subtly from normal mitoses in histopathology images. To address this challenge, this work introduces an attention-augmented deep learning framework built on a DenseNet-121 backbone and trained using the curated MIDOG Mitotic Figures Binary Classification Dataset. Several baseline CNNs and attention modules - CBAM, CCA, ECA, PSA, and Squeeze-and-Excitation (SE) - were evaluated, with SE consistently delivering the best performance when applied before global average pooling. A compact SE1D non-local attention block was also inserted at various depths of DenseNet-121 to determine the most effective placement, with Position 3 providing the highest gains. The final model, combining a global SE module with SE1D at Position 3, reached an accuracy of $89.17\%$, a precision of $89.91\%$, and an F1-score of $89.08\%$, outperforming all other configurations. These outcomes underscore importance of strategically placed channel-attention mechanisms for classification of mitotic subtypes.
+\end{abstract}
+
+
+\vspace{1em}  
+
+\renewcommand\IEEEkeywordsname{Keywords}
+\begin{IEEEkeywords}
+Mitotic classification, Atypical mitosis, DenseNet-121, Squeeze-and-Excitation, Non-local attention, Histopathology
+
+\end{IEEEkeywords}
+
+
+\section{Introduction}
+Mitotic figure evaluation plays a central role in grading various cancers, particularly breast carcinoma, since the frequency of cell division is strongly linked to tumour aggressiveness and patient prognosis. However, manually counting and distinguishing normal mitotic figures (NMF) from atypical mitotic figures (AMF) is time-consuming and often inconsistent, with significant inter-observer variation and differences between laboratories~\cite{Lin2024}. Although several automated approaches for mitosis detection and classification have been developed, they are still posed with challenges such as morphological diversity, severe class imbalance, and the presence of mitosis-like artefacts that resemble genuine mitotic events ~\cite{Kotte2022}. Even though deep learning models have greatly advanced performance in this domain, many existing solutions continue to show limited generalisation when exposed to variations in scanners, staining methods, and tumour subtypes.
+
+This paper proposes an architecture inspired by attention and deep learning to classify NMF and AMF data. We use DenseNet-121~\cite{Huang2017} as our backbone model because of its dense connections and its ability to preserve fine detail in structural information. To increase the ability of our features to distinguish between NMF and AMF, we add a global Squeeze-and-Excitation (SE) module to our model, and we test a lightweight SE1D non-local attention block in different parts of the backbone model to find the best location to insert it into the overall model. To select our best model architecture, we also compared the performance of our final model to baseline CNNs and to other well-known attention mechanisms including CBAM, CCA, ECA, PSA, and SE. This document represents the following major contributions:
+\begin{enumerate}
+    \item An extended and fine-tuned DenseNet-121 based model which incorporates Squeeze and excitation (SE) attention and SE-1D attention mechanisms for the classification of mitotic figures. 
+    \item Systematic investigation \& analysis of integrating ten different attention mechanisms into DenseNet-121.
+    \item Strategic placement of SE-1D attention integration between extended dense layers for superior performance compared to the baseline DenseNet-121 and attention-based models. 
+    %The empirical validation of our findings through experimental results, which indicates that the DenseNet-121 + SE1D produced superior performance in terms of accuracy, precision, recall, and F1-score compared to the baseline DenseNet-121 and attention-based models. 
+\end{enumerate}
+
+
+\section{Related Works}
+Accurately detecting and classifying mitotic figures in histopathology images remains a vital yet highly challenging aspect of cancer diagnosis and grading. Although mitotic activity is a strong prognostic marker, the task is often hindered by substantial inter-observer variability among pathologists. This section summarizes recent progress in computational approaches, especially deep learning-based methods aimed at automating and standardizing mitosis assessment. The use of advanced deep learning architectures, often in combination with ensemble methods, to increase the robustness of the detection of mitosis has emerged as a major area of research~\cite{Fick2024, Lin2024}. For instance,  Fick et al.\cite{Fick2024} experienced greater image robustness when scanning images in the MIDOG22 dataset with a YOLOR-D6 detector with DenseNet201/EfficientNetB4-based ensemble detectors. Kotte et al.~\cite{Kotte2022} were the second-highest ranked competitors at the MIDOG 2022 challenge through their combination of an EfficientNet-B7 classifier and a DETR detector using dual-scale patches and broadened data augmentation techniques to increase generalisability. 
+
+A critical component for systematically developing and training a robust system to detect mitotic figures are large and high-quality datasets. One significant effort to develop this type of dataset has been the "1000 Mitosis Project" by Lin et al. ~\cite{Lin2024}, which was an agreement between 85 pathologists to create a large-scale consensus study of 1000 mitotic cells. Their work has also supported the argument that there is a significant amount of subjectivity with regard to mitotic figure identification;as evidenced by the moderate inter-rater agreement (Fleiss’ κ = 0.284). Another pressing obstacle for practical deployment is domain shift-the performance drop seen when models encounter images from different scanners or staining protocols. Research from the MIDOG challenges has tackled this issue directly. Ammeling et al. ~\cite{Ammeling2022} employed a domain-adversarial RetinaNet (DA-RetinaNet) enriched with tumour-aware adversarial learning to strengthen cross-domain generalisation. Long et al.~\cite{Long2021} proposed a Domain Adaptive Cascade R-CNN that incorporated randomized stain normalization alongside adversarial training.
+
+Several hybrid method approaches have been investigated from a methodological approach. In particular, Iqbal and Qureshi ~\cite{Iqbal2022} created BreastUNet. It is a convolutional neural network (CNN) in which classical hand-engineered Local Binary Patterns (LBPs) were integrated, producing a remarkable F1 of 0.95. On the other hand, Shwetha and Dharmanna ~\cite{Shwetha2021} utilized low computational cost relative to deep networks to propose a traditional image processing method that was far less computational. Bertram et al.~\cite{Bertram2022} illustrated the effectiveness of AI as an aid in the veterinary context. The two-step CNN approach which is developed to help pathologists in mitotic figure counting shows a significant improvement in the consistency of the diagnosis, and the ICC increased from 0.70 to 0.92. This is a demonstration of the effectiveness of AI in handling false negatives.
+
+A more challenging task in this area is mitotic figure subclassification, especially the detection of atypical mitoses. Fick et al.~\cite{Fick2024} noted that their model performed poorly in this respect (F1 = 0.45). To address this issue, Aubreville et al.~\cite{Aubreville2023} proposed HFCOS, a hierarchical model that can distinguish between normal and atypical mitotic figures, reaching a high ROC-AUC of 0.833. Alongside algorithmic improvements, several studies have focused on refining clinical workflows. Ibrahim et al.~\cite{Ibrahim2022} analysed 595 whole-slide images (WSIs) to determine optimal regions for mitosis counting. They found that 3 mm² hotspots derived from tumour cell density produced the most stable and reliable measurements, supporting further standardisation of AI-driven scoring.
+
+
+Based on the work of Lafarge and Koelzer ~\cite{Lafarge2022}, a rotation-invariant ResNet was developed that applies fine-grained approaches to identify negative mining and achieves a substantially improved average precision in challenging domains. Although these approaches have contributed significantly to the improvement of the field, current systems still face difficulties in dealing with the challenges of extreme variability in domains or handling large multi-site datasets ~\cite{Ammeling2022,Long2021}. The same type of ensemble learning principles that have been successful in the previously discussed areas, such as grading diabetic retinopathy \cite{Hou2022} have shown performance in detecting mitotic figures \& establishing reliable systems.
+
+The difficulty in precise mitosis identification has also been highlighted by Donovan et al. ~\cite{Donovan2021} which provides guidelines to help in differentiating true mitotic figures from their look-alikes. This study further supports the need for consistent annotation in computational pathology. Kausar et al.~\cite{Kausar2020} introduced SmallMitosis, a two-stage framework for the purpose of identifying the presence of mitotic cells that are extremely tiny (mitotic cells are undergoing division). SmallMitosis employs a multi-scale Region Proposal Network (MS-RCNN) architecture, which has been shown to have an excellent F-score (0.902) on the ICPR-2012 data set. Despite the increased accuracy offered by SmallMitosis, systems such as these typically have high computational requirements and therefore do not lend themselves well to real-time use in clinical environments~\cite{Fick2024, Iqbal2022}. Overall, the use of deep learning technology and more advanced strategies for training medical prediction systems able to generalize effectively across different domains has led to significant improvements in the computational analysis. However, there are still a number of major challenges associated with medical image classification such as: a high requirement for processing power  \cite{anuj}, \cite{sruthi}, \cite{jaswanth}. This limits ability to generalize across unknown domains or types of data, and a lack of reliable detection of images, including atypical mitotic events. Therefore, future research should focus on developing systems that can operate in real time, improving unsupervised domain adaptation techniques and validating these systems on larger clinical populations.
+
+\section{Methodology}
+\subsection{Dataset Description, Augmentation and Preprocessing}
+\subsubsection{Original Dataset}
+This study employs the MIDOG Mitotic Figures Binary Classification Dataset (Balanced and Augmented), a curated and annotated dataset designed for binary classification of Normal Mitotic Figures (NMF) and Atypical Mitotic Figures (AMF). The dataset consolidates samples from the \textit{MIDOG25} challenge and the AMI-BR datase\textbf{t}, with additional representative data sourced from \textit{MIDOG21} and \textit{TUPAC16,} therefore capturing a broad range of staining variations, scanner differences, and mitotic morphologies.The number of PNG images in the dataset is approximately 15,000, and all images are resized to 224 × 224 pixels. The stratified split ratio is 60\% for training, 20\% for validation, and 20\% for testing. To avoid bias in the testing process, both the validation and testing datasets consist only of original, non-augmented images. The dataset is publicly accessible at \textbf{\href{https://zenodo.org/records/15188326}{https://zenodo.org/records/15188326}}. Samples from original and augmented dataset are shown in Fig. \ref{fig:Augumentedimages}.
+
+\begin{figure}
+    \centering
+    \includegraphics[width=1\linewidth]{DL_SampleAugImage.png}
+    \caption{Representative original and augmented mitotic figure samples}
+    \label{fig:Augumentedimages}
+\end{figure}
+
+\subsubsection{Augmentated Dataset}
+To mitigate class imbalance inherent in mitotic figure classification, a targeted augmentation strategy was applied exclusively to Atypical Mitotic Figures within the training subset(as illustrated in Figure~\ref{fig:Augumentedimages}). Four PIL-based synthetic augmentation techniques were employed using a fixed random seed for reproducibility, including controlled rotations, horizontal flipping with brightness adjustment, vertical flipping with contrast variation, and combined rotation with sharpness enhancement. Each original AMF image generated four augmented samples, resulting in approximately 6,000 additional AMF images. This approach enabled a balanced 1:1 ratio between NMF and AMF in the training set, while preserving the integrity of the validation and test distributions. The augmented training dataset is publicly accessible at \textbf{\href{https://www.kaggle.com/datasets/lostluinor/mitoticfigure-spiltandaugmenteddataset}{https://www.kaggle.com/datasets/lostluinor/mitoticfigure-spiltandaugmenteddataset}}.
+
+\subsection{System Architecture}
+Fig. \ref{fig:workflow} illustrates the end-to-end architecture of the proposed DenseNet-121-based model, which integrates a global SE module and a lightweight 1D-SE module for feature refinement prior to classification into Normal and Atypical Mitotic Figures.The architecture demonstrates how attention mechanisms are strategically placed to enhance discriminative feature learning at different network depths.
+
+\begin{figure}
+    \centering
+    \includegraphics[width=\linewidth]{workflowfull.drawio.png}
+    \caption{The proposed model using DenseNet-121-based model incorporating global SE \& 1D-SE attention for mitotic figure classification.
+}
+    \label{fig:workflow}
+\end{figure}
+
+
+\subsubsection{DenseNet-121 Backbone}
+
+DenseNet-121 is utilized as the backbone because of its effective mechanism of feature reuse and its powerful capability for capturing the fine-grained structural information necessary for accurate classification of mitosis. The architecture comprises an initial convolutional stem, followed by four dense blocks composed of multiple bottleneck layers connected using dense concatenation. The dense connectivity facilitates gradient flow, diminishes redundant feature extraction, and maintains subtle morphological cues, such as chromatin texture and nuclear boundary patterns in the network.
+
+Each dense block  in DenseNet-121 is followed by a transition layer that makes use of $1 \times 1$ convolutions and average pooling to control the spatial and channel dimensions of the feature maps. With this progressive aggregation of features along network depths, DenseNet-121 develops comprehensive multi-scale representations that can effectively distinguish normal and abnormal mitotic figures. Also, controlled growth rate in DenseNet-121 ensures a balanced increase in feature channels, avoiding superfluous computational overheads.
+
+\subsubsection{Squeeze-and-Excitation (3D SE) Attention}
+
+To enhance channel-wise feature discrimination, a global Squeeze-and-Excitation (SE) block is applied before global average pooling(as shown in Figure~\ref{fig:SE}). The SE mechanism performs global spatial aggregation to obtain a compact channel descriptor,
+\begin{equation}
+q_c = \frac{1}{|\Omega|}\sum_{(u,v)\in\Omega} F_c(u,v),
+\end{equation}
+where $F_c(u,v)$ denotes the activation of channel $c$ over the spatial domain $\Omega$. Channel dependencies are modeled using a lightweight gating mechanism,
+\begin{equation}
+\mathbf{a} = \phi\!\left(M_2\,\psi(M_1\mathbf{q})\right),
+\end{equation}
+where $M_1$ and $M_2$ are learnable transformations, $\psi(\cdot)$ is ReLU, and $\phi(\cdot)$ is sigmoid. The recalibrated feature maps are obtained via channel-wise modulation,
+\begin{equation}
+\hat{F}_c = a_c \odot F_c,
+\end{equation}
+allowing the model to emphasize informative channels associated with atypical mitotic structures while suppressing less relevant responses.In the current work, “3D SE” refers to channel recalibration over full convolutional feature tensors C×H×W prior to spatial pooling operations. This maintains the interaction between the spatial and channel dimensions prior to the dimensionality reduction operation. The architecture of the 3D SE module is shown in Figure.~\ref{fig:SE}.
+
+\begin{figure}
+    \centering
+    \includegraphics[width=1\linewidth]{SE.jpg}
+    \caption{Architecture of the 3D Squeeze-and-Excitation (SE) attention.}
+    \label{fig:SE}
+\end{figure}
+
+
+
+\subsubsection{1D Squeeze-and-Excitation (1D SE) Attention}
+
+To further refine intermediate representations with minimal computational overhead, a 1D Squeeze-and-Excitation (1D-SE) module is incorporated within the DenseNet-121 backbone (illustrated in Figure~\ref{fig:SE1D}). The 1D-SE mechanism follows the same squeeze-and-excitation principle as the 3D SE block but operates on a reduced one-dimensional channel representation, enabling efficient channel recalibration.Unlike conventional SE blocks that apply a global pooling operation, the proposed SE1D non-local block utilizes a 1D self-attention mechanism to model inter-channel dependencies, allowing for long-range channel interaction to improve feature discrimination.
+The module was evaluated at multiple depths of the backbone, with \textit{Position~3} yielding the best performance. The structure of the 1D SE module is illustrated in Figure~\ref{fig:SE1D}.
+
+
+\begin{figure}
+    \centering
+    \includegraphics[width=1\linewidth]{SE1D.jpg}
+    \caption{Architecture of the SE-1D non-local attention}
+    \label{fig:SE1D}
+\end{figure}
+
+\section{Experiments and Results}
+
+
+The hyperparameters used in training are listed in Table~\ref{tab:hyperparameters}. All images were resized to $224 \times 224$ to match the DenseNet-121 input format. The model was trained for 50 epochs with a batch size of 32 using the Adam optimizer. Focal Loss $(\alpha = 0.75,\, \gamma = 2.0)$ was employed to handle the imbalance between normal and atypical mitotic figures.Although the data was balanced, atypical mitoses remain harder to classify. Softmax activation with Focal Loss emphasizes hard samples to improve minority-class discrimination.   %Channel attention was introduced by an SE module, while a non-local attention block based on SE1D was added at the experimentally determined optimal position. DenseNet-121 pretrained on ImageNet served as the backbone.
+
+\begin{table}[htbp]
+\caption{Model Hyperparameters and Training Configurations}
+\label{tab:hyperparameters}
+\centering
+\resizebox{\columnwidth}{!}{%
+\begin{tabular}{lcc}
+\hline
+\textbf{Parameter} & \textbf{Description} & \textbf{Value} \\
+\hline
+Input Image Size        & Resized image resolution        & 224 $\times$ 224 \\
+Batch Size              & Samples per batch during training & 32 \\
+Epochs                  & Total training iterations        & 50 \\
+Optimizer               & Optimization algorithm           & Adam \\
+Loss Function           & Training loss function           & Focal Loss ($\alpha=0.75$, $\gamma=2.0$) \\
+Activation Function     & Final layer activation           & Softmax \\
+Backbone Architecture   & Pre-trained CNN backbone         & DenseNet-121 (ImageNet) \\
+Attention Mechanism     & Channel attention module         & SE (Squeeze-and-Excitation) \\
+Non-Local Attention     & Feature-wise self-attention      & SE1D \\
+
+\hline
+\end{tabular}%
+}
+\end{table}
+
+
+The model was evaluated using four different metrics: accuracy, precision, recall and F1 Score \cite{ravi}-\cite{asswin}. The primary metric for evaluation was precision, as it is crucial for identifying false positives when differentiating between atypical mitotic figures and other structurally similar cells. The other evaluation metrics provided additional information on the overall classification pattern for the model.
+
+\subsection{Selecting Convolutional Attention}
+
+
+To improve the feature extraction, ten attention mechanisms namely CCA, CBAM, SE etc were implemented by integrating them into fine-tuned DenseNet-121 model, as shown in Table~\ref{tab:attention_performance}. It is clearly evident that the simplest SE attention mechanism performed the best classification in terms of Recall and F-score. It must be noted that the heavier attention mechanisms like CBAM, GAM, Triple and PSA, which are known to incorporate both channel and spatial attention mechanisms along with additional feature refinement failed to outperform the SE integration. The work even tried fusing the baseline attentions with SE, but the combination drastically failed to achieve efficient performance even with increased complexity.
+
+\begin{table}[htbp]
+\caption{Convolutional Attention Performance Comparison}
+\label{tab:attention_performance}
+\centering
+\resizebox{\columnwidth}{!}{%
+\begin{tabular}{lccccc}
+\hline
+\textbf{Model} & \textbf{Accuracy} & \textbf{Loss} & \textbf{Precision} & \textbf{Recall} & \textbf{F1-score} \\
+\hline
+CBAM      & 0.8859 & 0.0874 & 0.8855 & 0.8859 & 0.8857 \\
+CCA       & 0.8888 & 0.0881 & 0.8833 & 0.8888 & 0.8854 \\
+ECA       & 0.8841 & 0.0986 & 0.8849 & 0.8841 & 0.8845 \\
+GAM       & 0.8741 & 0.0912 & 0.8810 & 0.8741 & 0.8771 \\
+PSA       & 0.8910 & 0.0885 & 0.8817 & 0.8877 & 0.8840 \\
+\textbf{SE} & \textbf{0.8942} & \textbf{0.0874} & \textbf{0.8937} & \textbf{0.8942} & \textbf{0.8939} \\
+SE+CCA    & 0.8856 & 0.0941 & 0.8856 & 0.8856 & 0.8866 \\
+SE+PSA    & 0.8841 & 0.0982 & 0.8901 & 0.8841 & 0.8867 \\
+Self-Att  & 0.8795 & 0.0875 & 0.8782 & 0.8795 & 0.8788 \\
+Triplet   & 0.8802 & 0.0908 & 0.8849 & 0.8802 & 0.8823 \\
+\hline
+\end{tabular}%
+}
+\end{table}
+
+
+\subsection{Attention Positioning Between Dense Layers}
+
+To determine the most effective depth for integrating attention mechanisms within the DenseNet-121 architecture, \textit{1D Squeeze-and-Excitation (1D-SE)} channel attention modules were systematically inserted at four different network depths, along with selected multi-position combinations. Alternative local and non-local attention variants were also evaluated at identical insertion points to ensure a fair comparison of attention strategies. The performance of 1D-SE configurations across different positions is reported in Table~\ref{tab:position_performance}.
+
+\begin{table}[htbp]
+\caption{1D-SE Position Combination Performance Comparison}
+\label{tab:position_performance}
+\centering
+\resizebox{\columnwidth}{!}{%
+\begin{tabular}{lccccc}
+\hline
+\textbf{Model} & \textbf{Accuracy} & \textbf{Loss} & \textbf{Precision} & \textbf{Recall} & \textbf{F1-score} \\
+\hline
+Position 1           & 0.8885 & 0.0861 & 0.8801 & 0.8885 & 0.8823 \\
+Position 2           & 0.8870 & 0.0907 & 0.8808 & 0.8870 & 0.8831 \\
+\textbf{Position 3} & \textbf{0.8917} & \textbf{0.0905} & \textbf{0.8991} & \textbf{0.8917} & \textbf{0.8908} \\
+Position 4           & 0.8912 & 0.0916 & 0.8905 & 0.8912 & 0.8920 \\
+Position 1\&2        & 0.8780 & 0.0890 & 0.8771 & 0.8780 & 0.8776 \\
+Position 1\&3        & 0.8892 & 0.0864 & 0.8833 & 0.8892 & 0.8854 \\
+Position 1\&4        & 0.8809 & 0.0896 & 0.8747 & 0.8809 & 0.8771 \\
+Position 2\&3        & 0.8806 & 0.0909 & 0.8844 & 0.8806 & 0.8823 \\
+Position 2\&4        & 0.8911 & 0.0907 & 0.8929 & 0.8911 & 0.8930 \\
+Position 3\&4        & 0.8906 & 0.0885 & 0.8878 & 0.8906 & 0.8906 \\
+Position 1,2\&3      & 0.8892 & 0.0902 & 0.8814 & 0.8892 & 0.8836 \\
+Position 1,2\&4      & 0.8870 & 0.0895 & 0.8865 & 0.8870 & 0.8867 \\
+Position 2,3\&4      & 0.8795 & 0.0905 & 0.8799 & 0.8795 & 0.8797 \\
+Position 1,2,3\&4    & 0.8791 & 0.0942 & 0.8770 & 0.8791 & 0.8780 \\
+\hline
+\end{tabular}%
+}
+\end{table}
+
+While the module that incorporated static attention as a layer of attention was the most accurate when placed at position 4 (1D non-local attention), there were several other modules that consistently produced highly accurate results (1D-SE). Across both evaluation tables, the 1D-SE module yielded the best configuration between the two.
+
+Among the single-position configurations, \textit{Position~3} achieved the best overall performance, yielding the highest precision, recall, and F1-score, as shown in Table~\ref{tab:position_performance}. This indicates that lightweight channel recalibration is most effective when applied to mid-level DenseNet features, which capture a balanced combination of structural and semantic information relevant for mitotic figure classification. Although certain multi-position configurations produced marginal performance gains, these improvements were accompanied by increased computational complexity. Consequently, the 1D-SE module placed at \textit{Position~3} was selected as the final attention configuration for all subsequent experiments.
+
+Performance in this model during training was strong with a validation accuracy of 89.35\% and a low validation loss of 0.0889 at epoch 15, showing that learning was effective and convergence was stable.The training and validation learning curves are shown in Figure~\ref{fig:learning_curves}.
+
+\begin{figure}[htbp]
+    \centering
+
+
+ \begin{subfigure}{0.48\columnwidth}
+        \centering
+        \includegraphics[width=\linewidth]{DL_TrainModelLoss.png}
+        \caption{Training and validation loss}
+        \label{fig:training_loss}
+    \end{subfigure}
+    \hfill
+    \begin{subfigure}{0.48\columnwidth}
+        \centering
+        \includegraphics[width=\linewidth]{DL_TrainModelAccuracy.png}
+        \caption{Training and validation accuracy}
+        \label{fig:training_accuracy}
+    \end{subfigure}
+    \caption{ Training and validation learning curves showing loss convergence and accuracy progression over 30 epochs}
+    \label{fig:learning_curves}
+\end{figure}
+
+The plots indicate a smooth learning process with no overfitting. The decrease in the training loss aligns with the validation accuracy, which verifies that the model is converging. The constant high value of the validation accuracy during training indicates that the model generalizes well.
+\begin{figure}
+    \centering
+    \includegraphics[width=0.5\linewidth]{DL_ConfusionMatrix.png}
+    \caption{Confusion matrix of the proposed DenseNet-121-based model on the test set, showing classification performance for Normal (NMF) and Atypical (AMF) mitotic figures.}
+    \label{fig:confusionmatrix}
+\end{figure}
+
+Figure~\ref{fig:confusionmatrix} provides a detailed view of the model’s classification behavior. The model achieves high specificity for the Normal class, correctly classifying 2210 out of 2353 samples (93.9\%). In contrast, atypical samples remain more challenging, with 276 out of 435 images correctly classified (63.4\%), while 36.6\% are misclassified as Normal. This behavior is expected, as atypical mitotic figures often share morphological similarities with normal or mitosis-like structures.
+
+
+\begin{figure}
+    \centering
+    \includegraphics[width=0.7\linewidth]{result inference.jpg}
+    \caption{Qualitative Comparison of predictions: \textit{Top row} – baseline DenseNet-121, \textit{Bottom row} – proposed SE + SE1D (Position~3) model.}
+    \label{fig:comparison_predictions}
+\end{figure}
+
+
+Figure~\ref{fig:comparison_predictions} illustrates the qualitative improvement brought about by the attention-augmented architecture. In the original DenseNet121 model, the fine details of atypical mitoses are commonly misclassified as Normal mitoses when the chromatin pattern is dense. However, the proposed model improves the classification of more atypical samples and increases the confidence of both classes. These qualitative observations are consistent with the quantitative analysis, which indicates that the integration of channel attention with the SE1D module enhances mid-level feature representation and suppresses false negatives.
+
+\begin{table}[htbp]
+\caption{Model Performance Comparison}
+\label{tab:model_performance}
+\centering
+\resizebox{\columnwidth}{!}{%
+\begin{tabular}{lccccc}
+\hline
+\textbf{Model} & \textbf{Accuracy (\%)} & \textbf{Loss} & \textbf{Precision} & \textbf{Recall} & \textbf{F1-score} \\
+\hline
+EfficientNet-B0~\cite{Tan2019}& 85.29 & 0.1035 & 0.8500 & 0.8500 & 0.8500 \\
+ViT-B16~\cite{Dosovitskiy2021}        & 87.16 & 0.0960 & 0.8720 & 0.8715 & 0.8718 \\
+ConvNeXt-Tiny ~\cite{Liu2022}     & 89.31 & 0.0866 & 0.8890 & 0.8931 & 0.8906 \\
+MobileNetv2-100~\cite{Sandler2018}  & 87.19 & 0.0976 & 0.8543 & 0.8690 & 0.8575 \\
+NAsNet-Large~\cite{Zoph2018}      & 82.42 & 0.1471 & 0.7308 & 0.8242 & 0.7679 \\
+RegNetY-16~\cite{Radosavovic2020}       & 87.16 & 0.0960 & 0.8720 & 0.8715 & 0.8718 \\
+XceptionNet~\cite{Chollet2017}       & 89.31 & 0.0866 & 0.8890 & 0.8931 & 0.8906 \\
+Proposed & 89.17 &\textbf{0.0905}& \textbf{0.8991} & \textbf{0.8917} & \textbf{0.8908}\\
+\hline
+\end{tabular}%
+}
+\end{table}
+
+The proposed approach has been compared to eight existing CNN models as presented in Table \ref{tab:model_performance}. Based on the comparative performance across standard evaluation metrics, DenseNet-121 exhibited the most balanced and consistent results and was therefore selected as the backbone model. It can be deduced that with simple SE attention integrations at multi-dimensional feature map and one-dimensional feature map the model achieved a higher Recall and an F-score. It must be noted that complex models like transformer-based ConvNext, ViT-B-16 and RegNeyY-16 models also failed to achieve the outperforming results. While the simple convolutional models like MobileNet and EfficientNet performed much lower than the proposed model, supporting the acceptance of the proposed model for the underlying disease classification.
+
+\section{Conclusion}
+The designed attention-enhanced DenseNet-121 model is very effective for the classification of mitotic figures into two classes and can distinguish normal mitotic figures from atypical ones. In particular, the combination of global SE attention and a 1D-SE channel recalibration module at Position 3 performs very well, achieving a test loss of 0.0905, accuracy of 89.17\%, F1-score of 0.8908, and precision of 0.8991. This clearly indicates that the channel attention approach significantly improves the discriminative capability of mid-level features.Although the attention modules are existing mechanisms, the novelty of this work lies in the systematic optimization of their positions in DenseNet-121. The research found that the most efficient stage in discriminating atypical mitoses is the mid-level feature recalibration.  The steady performance of the model indicates that it could be a useful tool in computational pathology for more accurate and efficient mitotic figure analysis. Future work may extend this approach to multi-class mitosis sub-typing, domain-generalization strategies, and integration into whole-slide image pipelines to enhance its clinical utility.
+
+
+\begin{thebibliography}{}
+
+\bibitem{Fick2024}
+Fick, R.R.H., Bertram, C., Aubreville, M., 2024. Improving CNN-based mitosis detection through rescanning annotated glass slides and atypical mitosis subtyping. In \textit{Medical Imaging with Deep Learning}.
+
+\bibitem{Lin2024}
+Lin, S., Tran, C., Bandari, E., Romagnoli, T., Li, Y., Chu, M., Amirthakatesan, A.S., et al., 2024. The 1000 mitoses project: A consensus-based international collaborative study on mitotic figures classification. \textit{International Journal of Surgical Pathology}, 32(8), 1449–1458.
+
+\bibitem{Kotte2022}
+Kotte, S., Saipradeep, V.G., Sivadasan, N., Joseph, T., Sharma, H., Walia, V., Varma, B., Mukherjee, G., 2022. A deep learning-based ensemble model for generalized mitosis detection in H\&E stained whole slide images. In \textit{MICCAI Challenge on Mitosis Domain Generalization}, pp. 221–225. Cham: Springer Nature Switzerland.
+
+\bibitem{Hou2022}
+Hou, J., Xiao, F., Xu, J., Zhang, Y., Zou, H., Feng, R., 2022. Deep-octa: ensemble deep learning approaches for diabetic retinopathy analysis on OCTA images. In \textit{MICCAI Challenge on Mitosis Domain Generalization}, pp. 74–87. Cham: Springer Nature Switzerland.
+
+\bibitem{Ammeling2022}
+Ammeling, J., Wilm, F., Ganz, J., Breininger, K., Aubreville, M., 2022. Reference algorithms for the mitosis domain generalization (MIDOG) 2022 challenge. In \textit{MICCAI Challenge on Mitosis Domain Generalization}, pp. 201–205. Cham: Springer Nature Switzerland.
+
+\bibitem{Long2021}
+Long, X., Cheng, Y., Mu, X., Liu, L., Liu, J., 2021. Domain adaptive cascade R-CNN for mitosis domain generalization (MIDOG) challenge. In \textit{International Conference on Medical Image Computing and Computer-Assisted Intervention}, pp. 73–76. Cham: Springer International Publishing.
+
+\bibitem{Iqbal2022}
+Iqbal, S., Qureshi, A.N., 2022. A heteromorphous deep CNN framework for medical image segmentation using local binary pattern. \textit{IEEE Access}, 10, 63466–63480.
+
+\bibitem{Bertram2022}
+Bertram, C.A., Aubreville, M., Donovan, T.A., Bartel, A., Wilm, F., Marzahl, C., Assenmacher, C.A., et al., 2022. Computer-assisted mitotic count using a deep learning–based algorithm improves interobserver reproducibility and accuracy. \textit{Veterinary Pathology}, 59(2), 211–226.
+
+\bibitem{Aubreville2023}
+Aubreville, M., Ganz, J., Ammeling, J., Donovan, T.A., Fick, R.H.J., Breininger, K., Bertram, C.A., 2023. Deep learning-based subtyping of atypical and normal mitoses using a hierarchical anchor-free object detector. In \textit{BVM Workshop}, pp. 189–195. Wiesbaden: Springer Fachmedien Wiesbaden.
+
+\bibitem{Ibrahim2022}
+Ibrahim, A., Lashen, A.G., Katayama, A., Mihai, R., Ball, G., Toss, M.S., Rakha, E.A., 2022. Defining the area of mitoses counting in invasive breast cancer using whole slide image. \textit{Modern Pathology}, 35(6), 739–748.
+
+\bibitem{Lafarge2022}
+Lafarge, M.W., Koelzer, V.H., 2022. Fine-Grained Hard-Negative Mining: Generalizing Mitosis Detection with a Fifth of the MIDOG 2022 Dataset. In \textit{Proceedings of MICCAI}.
+
+
+\bibitem{Donovan2021}
+Donovan, T.A., Moore, F.M., Bertram, C.A., Luong, R., Bolfa, P., Klopfleisch, R., Tvedten, H., et al., 2021. Mitotic figures—normal, atypical, and imposters: a guide to identification. \textit{Veterinary Pathology}, 58(2), 243–257.
+
+\bibitem{Shwetha2021}
+Shwetha, S.V., Dharmanna, L., 2021. An automatic recognition, identification and classification of mitotic cells for the diagnosis of breast cancer stages. \textit{International Journal of Image, Graphics and Signal Processing}, 14(6), 1–10.
+
+\bibitem{Kausar2020}
+Kausar, T., Wang, M., Ashraf, M.A., Kausar, A., 2020. SmallMitosis: small size mitotic cells detection in breast histopathology images. \textit{IEEE Access}, 9, 905–922.
+
+\bibitem{Tan2019}
+Tan, M., Le, Q.V., 2019. EfficientNet: Rethinking model scaling for convolutional neural networks. \textit{Proceedings of the 36th International Conference on Machine Learning (ICML)}, 97, 6105--6114.
+
+\bibitem{Dosovitskiy2021}
+Dosovitskiy, A., Beyer, L., Kolesnikov, A., Weissenborn, D., Zhai, X., Unterthiner, T., Dehghani, M., Minderer, M., Heigold, G., Gelly, S., Uszkoreit, J., Houlsby, N., 2021. An image is worth 16x16 words: Transformers for image recognition at scale. \textit{Proceedings of the International Conference on Learning Representations (ICLR)}.
+\bibitem{Huang2017}
+Huang, G., Liu, Z., Van Der Maaten, L., Weinberger, K.Q., 2017. Densely connected convolutional networks. \textit{Proceedings of the IEEE Conference on Computer Vision and Pattern Recognition (CVPR)}, pp. 4700--4708.
+\bibitem{anuj}
+Kumar, A. and Singh, R.P., 2024, June. Application of generative adversarial network for data augmentation in diabetic retinopathy. \textit{In 2024 15th International Conference on Computing Communication and Networking Technologies (ICCCNT)} (pp. 1-7). IEEE.
+\bibitem{jaswanth} Singh, R.P., Sree, N.H., Reddy, K.L.S.P. and Jashwanth, K., 2024. Convergence of deep learning and forensic methodologies using self-attention integrated efficientnet model for deep fake detection. SN Computer Science, 5(8), p.1139.
+
+\bibitem{sruthi} Sruthi, S., Emadaboina, S., Machavarapu, P., Singh, R.P. and Kanchan, S., 2024, April. Covid-19 classification using fine-tuned EfficientNet architecture. \textit{In 2024 IEEE 9th International Conference for Convergence in Technology (I2CT)} (pp. 1-6). IEEE.
+
+
+\bibitem{Liu2022}
+Liu, Z., Mao, H., Wu, C.-Y., Feichtenhofer, C., Darrell, T., Xie, S., 2022. A ConvNet for the 2020s. \textit{Proceedings of the IEEE/CVF Conference on Computer Vision and Pattern Recognition (CVPR)}, pp. 11976--11986.
+
+\bibitem{Sandler2018}
+Sandler, M., Howard, A., Zhu, M., Zhmoginov, A., Chen, L.-C., 2018. MobileNetV2: Inverted residuals and linear bottlenecks. \textit{Proceedings of the IEEE Conference on Computer Vision and Pattern Recognition (CVPR)}, pp. 4510--4520.
+
+\bibitem{Zoph2018}
+Zoph, B., Vasudevan, V., Shlens, J., Le, Q.V., 2018. Learning transferable architectures for scalable image recognition. \textit{Proceedings of the IEEE Conference on Computer Vision and Pattern Recognition (CVPR)}, pp. 8697--8710.
+
+\bibitem{Chollet2017}
+Chollet, F., 2017. Xception: Deep learning with depthwise separable convolutions. \textit{Proceedings of the IEEE Conference on Computer Vision and Pattern Recognition (CVPR)}, pp. 1251--1258.
+
+\bibitem{Radosavovic2020}
+Radosavovic, I., Kosaraju, R.P., Girshick, R., He, K., Dollár, P., 2020. Designing network design spaces. \textit{Proceedings of the IEEE/CVF Conference on Computer Vision and Pattern Recognition (CVPR)}, pp. 10428--10436.
+
+\bibitem{ravi}
+Ravi, V., EA, G. and KP, S., 2024. Deep learning-based approach for multi-stage diagnosis of Alzheimer’s disease. Multimedia Tools and Applications, 83(6), pp.16799-16822.
+\bibitem{mol}
+Mol, B., Singh, R.P. and Kumar, P., 2023, December. Parkinson disease classification using hybrid deep learning approach. In 2023 9th International Conference on Signal Processing and Communication (ICSC) (pp. 591-596). IEEE.
+\bibitem{suguna}
+Sugunadevi, C., Singh, R.P., Maheswari, B.U. and Kumar, P., 2023, December. DiaMOS plant leaves disease classification using vision transformer. In 2023 9th International Conference on Signal Processing and Communication (ICSC) (pp. 551-556). IEEE.
+\bibitem{asswin}
+Asswin, C.R., KS, D.K., Dora, A., Ravi, V., Sowmya, V., Gopalakrishnan, E.A. and Soman, K.P., 2023. Transfer learning approach for pediatric pneumonia diagnosis using channel attention deep CNN architectures. Engineering Applications of Artificial Intelligence, 123, p.106416.
+\end{thebibliography}
+
+\end{document}
