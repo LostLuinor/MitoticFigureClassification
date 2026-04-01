@@ -119,13 +119,6 @@ The model was evaluated using four metrics: **accuracy, precision, recall, and F
 
 ---
 
-## Credits
-
-This project uses datasets and resources provided by the [MIDOG 2025 Challenge](https://midog2025.deepmicroscopy.org/), which builds on the success of previous MIDOG challenges to advance AI-assisted cancer diagnosis.
-
-Special thanks to the MIDOG organizers for their efforts in curating high-quality datasets and promoting research in histopathological image analysis.
-
----
 
 ## Selecting Convolutional Attention
 
@@ -147,3 +140,24 @@ To improve feature extraction on top of the DenseNet-121 backbone, we experiment
 | Triplet   | 0.8802   | 0.0908 | 0.8849    | 0.8802  | 0.8823   |
 
 In summary, the SE attention module was selected for the final model configuration due to its consistent improvements across metrics and its simplicity compared to multi-attention combinations.
+
+---
+
+## Report and Presentation Files
+
+The `Report&PPT` folder contains the project report and presentation files:
+
+- `DL_MitoticClassification_IEEEReport.pdf`
+- `DL_MitoticFigureClassification_LatexReport.tex`
+- `DL_MitoticFigureClassification_ppt.pdf`
+- `DL_MitoticFigureClassification_ppt.pptx`
+
+---
+
+## Credits
+
+This project uses datasets and resources provided by the [MIDOG 2025 Challenge](https://midog2025.deepmicroscopy.org/), which builds on the success of previous MIDOG challenges to advance AI-assisted cancer diagnosis.
+
+Special thanks to the MIDOG organizers for their efforts in curating high-quality datasets and promoting research in histopathological image analysis.
+
+---
