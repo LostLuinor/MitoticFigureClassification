@@ -1,151 +1,148 @@
-# Deep Learning Model for Identification of Atypical Mitotic Figures
+# Deep Learning for Atypical Mitotic Figure Classification
 
-## Project Overview
+## Overview
 
-Atypical Mitotic Figures (AMF) are rare but highly relevant markers of tumour aggressiveness in histopathology. Distinguishing AMF from Normal Mitotic Figures (NMF) is challenging due to their subtle morphological differences and low frequency in whole-slide images. Reliable automated detection requires high-quality, well-annotated datasets that capture this variability. This project uses a curated and augmented dataset of mitotic figure image patches to support robust binary classification between AMF and NMF.
+This project focuses on binary classification of mitotic figure patches into:
 
----
+- AMF: Atypical Mitotic Figures
+- NMF: Normal Mitotic Figures
 
-## Dataset Description
-
-### Overview
-
-This project uses the **MIDOG Mitotic Figures Binary Classification Dataset – Balanced & Augmented**, a curated collection designed specifically for distinguishing Normal Mitotic Figures (NMF) and Atypical Mitotic Figures (AMF). The dataset integrates samples from several established histopathology challenges and repositories, including:
-
-- **MIDOG25**
-- **AMI-BR** dataset, which itself includes:
-	- MIDOG21
-	- TUPAC16
-
-The dataset contains over **14,000 high-resolution PNG images (224×224)**, accompanied by metadata and documentation. All samples represent mitotic figure patches extracted from H&E-stained breast cancer whole-slide images.
+Detecting AMF is clinically relevant but difficult because atypical samples are rare and visually subtle in H&E-stained histopathology images. The pipeline in this repository addresses that challenge through curated data preparation, class-balancing augmentation, baseline model benchmarking, and attention-based model improvement.
 
 ---
 
-### Dataset Structure
+## Key Highlights
 
-A stratified split ensures equal representation of both classes across the three subsets:
-
-| Split      | Approx. Samples | Notes                                 |
-|------------|-----------------|---------------------------------------|
-| Training   | ~9,000          | Contains augmented AMF samples         |
-| Validation | ~3,000          | Only original images (no augmentation) |
-| Test       | ~3,000          | Only original images (no augmentation) |
-
-Validation and test sets contain exclusively non-augmented images to preserve unbiased evaluation conditions.
-
-**Dataset access:**  
-[Original curated dataset](https://zenodo.org/records/15188326)
+- Dataset size: 14,000+ RGB image patches (224 x 224)
+- Balanced training strategy using targeted 4x AMF augmentation
+- Baseline benchmark across multiple architectures
+- Final backbone choice: DenseNet-121
+- Best convolutional attention in experiments: SE (Squeeze-and-Excitation)
 
 ---
 
-## Class Imbalance Handling & Augmented Dataset
+## Repository Structure
 
-Atypical mitoses are naturally underrepresented in real histopathology data. To counter this imbalance, a **4× augmentation strategy** was applied only to AMF training images. This augmentation does not affect the validation or test sets.
-
-Each original AMF image generates four additional variants, created using PIL-based augmentation with a fixed random seed for reproducibility. Transformations applied include:
-
-- **Random Rotation**
-	- 15°–30°
-	- White background fill
-- **Horizontal Flip + Brightness Adjustment**
-	- Horizontal flip
-	- Brightness scaled between 0.9×–1.1×
-- **Vertical Flip + Contrast Adjustment**
-	- Vertical flip
-	- Contrast scaled between 0.9×–1.1×
-- **Rotation + Sharpness Enhancement**
-	- 5°–15° rotation
-	- Sharpness adjustment between 0.9×–1.1×
-
-This results in approximately **6,000 additional AMF samples**, yielding a balanced **1:1 ratio of AMF to NMF** in the training dataset.
-
-**Augmented dataset:**  
-[Augmented training dataset](https://www.kaggle.com/datasets/lostluinor/mitoticfigure-spiltandaugmenteddataset)
+| Folder | Purpose |
+|---|---|
+| `Dataset/` | Original source datasets and CSV metadata |
+| `Augmentation/` | Data augmentation and train/val/test split notebooks |
+| `AugmentedDataset/` | Final processed training/validation/testing image sets |
+| `BaselineModel/` | Baseline architecture training notebooks and result files |
+| `Attentions/` | Attention module experiments (SE, CBAM, CCA, ECA, PSA, etc.) |
+| `Position/SE1D/` | Non-local attention position search experiments |
+| `Report&PPT/` | Report and presentation artifacts |
 
 ---
 
+## Dataset
 
-## Image Format & Resolution
+### Data Sources
 
-- **Format:** PNG
-- **Resolution:** 224 × 224 pixels
-- **Color Space:** RGB
-- **Content:** Isolated patches centered on mitotic figures
+The dataset combines samples from:
 
----
+- MIDOG25
+- AMI-BR
+- MIDOG21 (via AMI-BR)
+- TUPAC16 (via AMI-BR)
 
-## Baseline Model Selection & Comparison
+All samples are image patches centered on mitotic figures.
 
-To identify the best baseline architecture, several CNN models—including DenseNet, MobileNet, ConvNeXt, EfficientNet, ViT, NASNet, RegNet, and XceptionNet—were evaluated on the dataset. Performance metrics such as accuracy, loss, precision, recall, and F1-score were compared across models.
+### Split Summary
 
-Based on the results, **DenseNet-121** was selected as the backbone for further development due to its strong overall performance, achieving high accuracy and balanced precision, recall, and F1-score.
+| Split | Approx. Samples | Notes |
+|---|---:|---|
+| Training | ~9,000 | Includes augmented AMF samples |
+| Validation | ~3,000 | Original images only |
+| Test | ~3,000 | Original images only |
 
-**Model Performance Comparison:**
+Validation and test sets intentionally use non-augmented data to preserve unbiased evaluation.
 
-| Model             | Accuracy (%) | Loss    | Precision | Recall   | F1-score |
-|-------------------|-------------|---------|-----------|----------|----------|
-| EfficientNet-B0   | 85.29       | 0.1035  | 0.8500    | 0.8500   | 0.8500   |
-| **DenseNet-121**  | **89.02**   | **0.0900** | **0.8904** | **0.8902** | **0.8903** |
-| ViT-B16           | 87.16       | 0.0960  | 0.8720    | 0.8715   | 0.8718   |
-| ConvNeXt-Tiny     | 89.31       | 0.0866  | 0.8890    | 0.8931   | 0.8906   |
-| MobileNetv2-100   | 87.19       | 0.0976  | 0.8543    | 0.8690   | 0.8575   |
-| NASNet-Large      | 82.42       | 0.1471  | 0.7308    | 0.8242   | 0.7679   |
-| RegNetY-16        | 87.16       | 0.0960  | 0.8720    | 0.8715   | 0.8718   |
-| XceptionNet       | 89.31       | 0.0866  | 0.8890    | 0.8931   | 0.8906   |
+### Links
 
----
-
-## Model Training & Evaluation Summary
-
-The model was trained using images resized to **224 × 224** pixels to match the DenseNet-121 input format. Training was performed for **50 epochs** with a **batch size of 32** using the **Adam optimizer**. To address class imbalance, **Focal Loss** ($\alpha = 0.75$, $\gamma = 2.0$) was employed. The final classification layer used **Softmax activation**.
-
-**Channel attention** was introduced via a Squeeze-and-Excitation (SE) module, and a **non-local attention block** (SE1D) was added at the experimentally determined optimal position. The backbone architecture was **DenseNet-121 pretrained on ImageNet**.
-
-**Key hyperparameters and configurations:**
-
-| Parameter               | Description                        | Value                                 |
-|------------------------|------------------------------------|---------------------------------------|
-| Input Image Size       | Resized image resolution           | 224 × 224                             |
-| Batch Size             | Samples per batch during training  | 32                                    |
-| Epochs                 | Total training iterations          | 50                                    |
-| Optimizer              | Optimization algorithm             | Adam                                  |
-| Loss Function          | Training loss function             | Focal Loss ($\alpha=0.75$, $\gamma=2.0$) |
-| Activation Function    | Final layer activation             | Softmax                               |
-| Backbone Architecture  | Pre-trained CNN backbone           | DenseNet-121 (ImageNet)               |
-| Attention Mechanism    | Channel attention module           | SE (Squeeze-and-Excitation)           |
-| Non-Local Attention    | Feature-wise self-attention        | SE1D                                  |
-
-The model was evaluated using four metrics: **accuracy, precision, recall, and F1 Score**. **Precision** was the primary metric, as it is crucial for identifying false positives when differentiating atypical mitotic figures from other similar cells. The other metrics provided additional insights into the overall classification performance.
+- Original curated dataset: [Zenodo](https://zenodo.org/records/15188326)
+- Augmented training dataset: [Kaggle](https://www.kaggle.com/datasets/lostluinor/mitoticfigure-spiltandaugmenteddataset)
 
 ---
 
+## Class Imbalance Handling
 
-## Selecting Convolutional Attention
+AMF samples are naturally underrepresented. To improve class balance in training:
 
-To improve feature extraction on top of the DenseNet-121 backbone, we experimented with several attention mechanisms commonly used in convolutional architectures: CCA, CBAM, ECA, GAM, PSA, and SE. We first evaluated single-attention variants and found that **SE (Squeeze-and-Excitation)** delivered the best performance among them. We then tried combining SE with other attentions (SE+PSA, SE+CCA), but **SE alone** still provided superior overall results.
+- Augmentation is applied only to AMF training samples
+- Each AMF image generates 4 additional variants
+- Effective outcome is approximately +6,000 AMF samples
+- Final training balance is approximately 1:1 (AMF:NMF)
 
-### Convolutional Attention Performance Comparison
+Augmentation operations include controlled rotation, flips, brightness/contrast variation, and sharpness adjustment.
 
-| Model     | Accuracy | Loss   | Precision | Recall  | F1-score |
-|-----------|----------|--------|-----------|---------|----------|
-| CBAM      | 0.8859   | 0.0874 | 0.8855    | 0.8859  | 0.8857   |
-| CCA       | 0.8888   | 0.0881 | 0.8833    | 0.8888  | 0.8854   |
-| ECA       | 0.8841   | 0.0986 | 0.8849    | 0.8841  | 0.8845   |
-| GAM       | 0.8741   | 0.0912 | 0.8810    | 0.8741  | 0.8771   |
-| PSA       | 0.8910   | 0.0885 | 0.8817    | 0.8877  | 0.8840   |
-| **SE**    | **0.8942** | **0.0874** | **0.8937** | **0.8942** | **0.8939** |
-| SE+CCA    | 0.8856   | 0.0941 | 0.8856    | 0.8856  | 0.8866   |
-| SE+PSA    | 0.8841   | 0.0982 | 0.8901    | 0.8841  | 0.8867   |
-| Self-Att  | 0.8795   | 0.0875 | 0.8782    | 0.8795  | 0.8788   |
-| Triplet   | 0.8802   | 0.0908 | 0.8849    | 0.8802  | 0.8823   |
+---
 
-In summary, the SE attention module was selected for the final model configuration due to its consistent improvements across metrics and its simplicity compared to multi-attention combinations.
+## Modeling Workflow
+
+1. Benchmark multiple baseline architectures.
+2. Select the strongest backbone using accuracy, precision, recall, F1-score, and loss.
+3. Add and compare multiple convolutional attention modules.
+4. Pick the best attention design and tune placement using SE1D position experiments.
+
+---
+
+## Baseline Model Comparison
+
+DenseNet-121 was selected as the main backbone due to strong and stable overall performance.
+
+| Model | Accuracy (%) | Loss | Precision | Recall | F1-score |
+|---|---:|---:|---:|---:|---:|
+| EfficientNet-B0 | 85.29 | 0.1035 | 0.8500 | 0.8500 | 0.8500 |
+| **DenseNet-121** | **89.02** | **0.0900** | **0.8904** | **0.8902** | **0.8903** |
+| ViT-B16 | 87.16 | 0.0960 | 0.8720 | 0.8715 | 0.8718 |
+| ConvNeXt-Tiny | 89.31 | 0.0866 | 0.8890 | 0.8931 | 0.8906 |
+| MobileNetV2-100 | 87.19 | 0.0976 | 0.8543 | 0.8690 | 0.8575 |
+| NASNet-Large | 82.42 | 0.1471 | 0.7308 | 0.8242 | 0.7679 |
+| RegNetY-16 | 87.16 | 0.0960 | 0.8720 | 0.8715 | 0.8718 |
+| XceptionNet | 89.31 | 0.0866 | 0.8890 | 0.8931 | 0.8906 |
+
+---
+
+## Training Configuration
+
+| Parameter | Value |
+|---|---|
+| Input size | 224 x 224 |
+| Batch size | 32 |
+| Epochs | 50 |
+| Optimizer | Adam |
+| Loss | Focal Loss ($\alpha=0.75$, $\gamma=2.0$) |
+| Final activation | Softmax |
+| Backbone | DenseNet-121 (ImageNet pretrained) |
+| Attention | SE + SE1D |
+
+Primary evaluation focus is precision, since reducing false positives is important for atypical mitosis screening.
+
+---
+
+## Attention Module Experiments
+
+SE achieved the best overall metrics among tested attention variants and combinations.
+
+| Model | Accuracy | Loss | Precision | Recall | F1-score |
+|---|---:|---:|---:|---:|---:|
+| CBAM | 0.8859 | 0.0874 | 0.8855 | 0.8859 | 0.8857 |
+| CCA | 0.8888 | 0.0881 | 0.8833 | 0.8888 | 0.8854 |
+| ECA | 0.8841 | 0.0986 | 0.8849 | 0.8841 | 0.8845 |
+| GAM | 0.8741 | 0.0912 | 0.8810 | 0.8741 | 0.8771 |
+| PSA | 0.8910 | 0.0885 | 0.8817 | 0.8877 | 0.8840 |
+| **SE** | **0.8942** | **0.0874** | **0.8937** | **0.8942** | **0.8939** |
+| SE+CCA | 0.8856 | 0.0941 | 0.8856 | 0.8856 | 0.8866 |
+| SE+PSA | 0.8841 | 0.0982 | 0.8901 | 0.8841 | 0.8867 |
+| Self-Att | 0.8795 | 0.0875 | 0.8782 | 0.8795 | 0.8788 |
+| Triplet | 0.8802 | 0.0908 | 0.8849 | 0.8802 | 0.8823 |
 
 ---
 
 ## Report and Presentation Files
 
-The `Report&PPT` folder contains the project report and presentation files:
+The `Report&PPT` folder currently includes:
 
 - `DL_MitoticClassification_IEEEReport.pdf`
 - `DL_MitoticFigureClassification_LatexReport.tex`
@@ -156,8 +153,6 @@ The `Report&PPT` folder contains the project report and presentation files:
 
 ## Credits
 
-This project uses datasets and resources provided by the [MIDOG 2025 Challenge](https://midog2025.deepmicroscopy.org/), which builds on the success of previous MIDOG challenges to advance AI-assisted cancer diagnosis.
+This work uses resources from the [MIDOG 2025 Challenge](https://midog2025.deepmicroscopy.org/) and related datasets.
 
-Special thanks to the MIDOG organizers for their efforts in curating high-quality datasets and promoting research in histopathological image analysis.
-
----
+Thanks to the MIDOG organizers and contributors for supporting reproducible research in computational pathology.
